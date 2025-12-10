@@ -24,7 +24,9 @@ static uint8_t rgbrec_buffer[MATRIX_ROWS * MATRIX_COLS * 2];
 
 //clang-format off
 static const uint8_t rgbmatrix_buff[]   = {13, 15, 16, 24, 25, 26, 29, 37, 33, 34, 35, 43, 2, 5, 6, 9};
-static const uint8_t sixth_gear_buff[]  = {6, 13, 15, 16, 25, 26, 34};
+// static const uint8_t sixth_gear_buff[]  = {6, 13, 15, 16, 25, 26, 34};
+static const uint8_t sixth_gear_buff[] = {1};
+
 static uint8_t rgb_hsvs[RGB_HSV_MAX][2] = {
     {0,   255},
     {64,  255},
@@ -272,41 +274,130 @@ void record_rgbmatrix_increase(uint8_t *last_mode) {
     }
     *last_mode = rgbmatrix_buff[index];
     rgb_matrix_mode(rgbmatrix_buff[index]);
-    //record_color_hsv(false);
     uint8_t rgb_hsv_index =  record_color_read_data();
     rgb_matrix_sethsv(rgb_hsvs[rgb_hsv_index][0], rgb_hsvs[rgb_hsv_index][1], rgb_matrix_get_val());
 }
 
-uint8_t record_color_hsv(bool status) {
-    uint8_t temp;
-    uint8_t rgb_hsv_index = record_color_read_data();
+void record_color_hsv(void) {
+    uint8_t now_mode = rgb_matrix_get_mode();
+    uint8_t temp = 0;
 
-    for (uint8_t i = 0; i < (sizeof(sixth_gear_buff) / sizeof(sixth_gear_buff[0])); i++) {
-        if (rgb_matrix_get_mode() == sixth_gear_buff[i]) {
+    for (uint8_t i = 0; i < (sizeof(sixth_gear_buff)/sizeof(sixth_gear_buff[0])); i++) {
+        if (now_mode == sixth_gear_buff[i]) {
             temp = RGB_HSV_MAX - 1;
             break;
-        } else if (i == (sizeof(sixth_gear_buff) / sizeof(sixth_gear_buff[0]) - 1)) {
-            temp = RGB_HSV_MAX;
         }
     }
 
-    if (status) {
-        if (rgb_hsv_index != temp)
-            rgb_hsv_index = (rgb_hsv_index + 1);
-        else
-            rgb_hsv_index = 0xFF;
-    } else {
-        if (rgb_hsv_index)
-            rgb_hsv_index = (rgb_hsv_index - 1);
-        else
-            rgb_hsv_index = 0xFF;
+    if (!temp) {
+        temp = RGB_HSV_MAX;
+    }
+
+    uint8_t rgb_hsv_index = record_color_read_data();
+
+    rgb_hsv_index ++;
+    if (rgb_hsv_index >= RGB_HSV_MAX) rgb_hsv_index = (RGB_HSV_MAX-1);
+
+    rgb_matrix_sethsv(rgb_hsvs[rgb_hsv_index][0], rgb_hsvs[rgb_hsv_index][1], rgb_matrix_get_val());
+    uint8_t *ptr = (uint8_t *)(((uint32_t)CONFINFO_EECONFIG_ADDR + 4) + find_index());
+    eeprom_write_byte(ptr, rgb_hsv_index);
+}
+
+void record_color_hsv_reverse(void) {
+    uint8_t now_mode = rgb_matrix_get_mode();
+    uint8_t temp = 0;
+
+    for (uint8_t i = 0; i < (sizeof(sixth_gear_buff)/sizeof(sixth_gear_buff[0])); i++) {
+        if (now_mode == sixth_gear_buff[i]) {
+            temp = RGB_HSV_MAX - 1;
+            break;
+        }
+    }
+
+    if (!temp) {
+        temp = RGB_HSV_MAX;
+    }
+
+    uint8_t rgb_hsv_index = record_color_read_data();
+
+    if (rgb_hsv_index > 0) {
+        rgb_hsv_index --;
     }
 
     rgb_matrix_sethsv(rgb_hsvs[rgb_hsv_index][0], rgb_hsvs[rgb_hsv_index][1], rgb_matrix_get_val());
-
     uint8_t *ptr = (uint8_t *)(((uint32_t)CONFINFO_EECONFIG_ADDR + 4) + find_index());
     eeprom_write_byte(ptr, rgb_hsv_index);
-    return rgb_hsv_index;
+}
+
+void rgbrec_switch_channel(uint8_t channel) {
+    if (channel >= RGBREC_CHANNEL_NUM) {
+        return;
+    }
+
+    rgbrec_read_current_channel(channel);
+    rgbrec_end(channel);                  
+    rgbrec_show(channel);
+}
+
+uint32_t rgbrec_calc_address(uint8_t channel, uint8_t row, uint8_t column) {
+    uint32_t addr = 0x00;
+
+    addr = (uint32_t)(RGBREC_EECONFIG_ADDR) + (channel * sizeof(rgbrec_buffer)) + ((row * MATRIX_COLS + column) * 2);
+
+    return addr;
+}
+
+uint16_t rgbrec_get_hs_data(uint8_t channel, uint8_t row, uint8_t column) {
+    if (channel >= RGBREC_CHANNEL_NUM || row >= MATRIX_ROWS || column >= MATRIX_COLS) {
+        return 0x0000;
+    }
+
+    void *address = (uint32_t *)rgbrec_calc_address(channel, row, column);
+
+    // Little endian
+    uint16_t hs = eeprom_read_byte(address);
+    hs |= eeprom_read_byte(address + 1) << 8;
+    return hs;
+}
+
+void rgbrec_set_hs_data(uint8_t channel, uint8_t row, uint8_t column, uint16_t hs) {
+    if (channel >= RGBREC_CHANNEL_NUM || row >= MATRIX_ROWS || column >= MATRIX_COLS) {
+        return;
+    }
+
+    void *address = (uint32_t *)rgbrec_calc_address(channel, row, column);
+
+    // Little endian
+    eeprom_update_byte(address, (uint8_t)(hs & 0xFF));
+    eeprom_update_byte(address + 1, (uint8_t)(hs >> 8));
+}
+
+void rgbrec_get_hs_buffer(uint16_t offset, uint16_t size, uint8_t *data) {
+    uint16_t hs_total_size = RGBREC_CHANNEL_NUM * MATRIX_ROWS * MATRIX_COLS * 2;
+    void *source           = (void *)(RGBREC_EECONFIG_ADDR + offset);
+    uint8_t *target        = data;
+    for (uint16_t i = 0; i < size; i++) {
+        if (offset + i < hs_total_size) {
+            *target = eeprom_read_byte(source);
+        } else {
+            *target = 0x00;
+        }
+        source++;
+        target++;
+    }
+}
+
+void rgbrec_set_hs_buffer(uint16_t offset, uint16_t size, uint8_t *data) {
+    uint16_t hs_total_size = RGBREC_CHANNEL_NUM * MATRIX_ROWS * MATRIX_COLS * 2;
+    void *target           = (void *)(RGBREC_EECONFIG_ADDR + offset);
+    uint8_t *source        = data;
+    for (uint16_t i = 0; i < size; i++) {
+        if ((offset + i) < hs_total_size) {
+            eeprom_update_byte(target, *source);
+        }
+        source++;
+        target++;
+    }
 }
 
 bool rk_bat_req_flag;
@@ -314,7 +405,7 @@ bool rk_bat_req_flag;
 void query(void) {
     if (rk_bat_req_flag) {
 #ifdef RGBLIGHT_ENABLE
-        for (uint8_t i = 0; i < (RGB_MATRIX_LED_COUNT - RGBLED_NUM); i++) {
+        for (uint8_t i = 0; i < (RGB_MATRIX_LED_COUNT); i++) {
             rgb_matrix_set_color(i, 0, 0, 0);
         }
 #else

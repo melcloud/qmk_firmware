@@ -7,7 +7,7 @@
 #include "transport.h"
 
 #ifndef USB_POWER_DOWN_DELAY
-#    define USB_POWER_DOWN_DELAY 3000
+#    define USB_POWER_DOWN_DELAY 10000
 #endif
 
 extern host_driver_t chibios_driver;
@@ -76,12 +76,12 @@ void set_transport(transport_t new_transport) {
 
         switch (transport) {
             case TRANSPORT_USB: {
-                usb_transport_enable(true);
                 wls_transport_enable(false);
+                usb_transport_enable(true);
             } break;
             case TRANSPORT_WLS: {
-                wls_transport_enable(true);
                 usb_transport_enable(false);
+                wls_transport_enable(true);
             } break;
             default:
                 break;
@@ -93,7 +93,7 @@ transport_t get_transport(void) {
 
     return transport;
 }
-
+uint32_t suspend_timer = 0x00;
 void usb_remote_wakeup(void) {
 
 #ifdef USB_REMOTE_USE_QMK
@@ -119,13 +119,14 @@ void usb_remote_wakeup(void) {
         /* Woken up */
     }
 #else
-    static uint32_t suspend_timer = 0x00;
-
+    
     if ((USB_DRIVER.state == USB_SUSPENDED)) {
         if (!suspend_timer) suspend_timer = sync_timer_read32();
         if (sync_timer_elapsed32(suspend_timer) >= USB_POWER_DOWN_DELAY) {
             suspend_timer = 0x00;
-            suspend_power_down();
+            extern void lpwr_set_timeout_manual(bool enable);
+            // suspend_power_down();
+            lpwr_set_timeout_manual(true);
         }
     } else {
         suspend_timer = 0x00;

@@ -19,6 +19,9 @@ typedef enum {
     LPWR_WAKEUP_ONEKEY,
     LPWR_WAKEUP_ENCODER,
     LPWR_WAKEUP_SWITCH,
+#ifdef TP_UART 
+    LPWR_WAKEUP_TP_PAD,
+#endif
 } lpwr_wakeupcd_t;
 
 typedef enum {

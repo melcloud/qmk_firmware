@@ -8,10 +8,12 @@
 #define LED_POWER_EN_2_PIN                  A9 // LED ENABLE pin
 #define HS_BAT_CABLE_PIN                    A7 // USB insertion detection pin
 #define HS_LED_BOOSTING_PIN                 B9 // LED BOOSTING
+#define RGB_DRIVER_EN_STATE                 1
 
 #define BAT_FULL_PIN                        A15
 #define BAT_FULL_STATE                      1
 
+#define RGB_MATRIX_LED_COUNT                104
 #define HS_RGB_INDICATOR_COUNT              104
 #define HS_RGB_BAT_COUNT                    1
 
@@ -45,7 +47,8 @@
 #define RGB_MATRIX_BAT_INDEX_MAP            {25, 26, 27, 28, 29, 30, 31, 32, 33, 34}
 
 /* Status Indicator Lamp */
-#define HS_MATRIX_BLINK_INDEX_BAT           96
+#define WIITE_B                             0X50
+#define HS_MATRIX_BLINK_INDEX_BAT           95
 #define HS_RGB_INDEX_CAPS                   60
 #define HS_RGB_INDEX_WIN_LOCK               93
 
@@ -54,6 +57,10 @@
 
 #define SYSTEM_WIN_PIN                      C15
 #define SYSTEM_MAC_PIN                      C14
+
+/*LED*/
+#define LED_PIN_ON_STATE 0
+#define LED_NUM_PIN B8
 
 /* UART */
 #define SERIAL_DRIVER                       SD3
@@ -72,6 +79,7 @@
 /* Flash */
 #define EXTERNAL_FLASH_SPI_SLAVE_SELECT_PIN C12
 #define WEAR_LEVELING_LOGICAL_SIZE          (WEAR_LEVELING_BACKING_SIZE / 2)
+#define VIA_EEPROM_ALLOW_RESET   
 
 /* RGB Light */
 #define RGBLED_NUM 6
@@ -80,12 +88,14 @@
 #define RGBLIGHT_DISABLE_KEYCODES
 #define BREATHING_VAL           40
 #define RAINBOW_MOOD            40
+#define RGBLIGHT_LIMIT_VAL      40
 #define LED_TYPE                RGB
 #define RGBLIGHT_LED_MAP {0, 1, 2, 3, 4, 5}
 
 /* RGB Matrix */
 #define RGB_MATRIX_FRAMEBUFFER_EFFECTS
 #define RGB_MATRIX_KEYPRESSES
+#define RGB_TRIGGER_ON_KEYDOWN
 
 /* WS2812 */
 #define WS2812_SPI_DRIVER  SPIDM2

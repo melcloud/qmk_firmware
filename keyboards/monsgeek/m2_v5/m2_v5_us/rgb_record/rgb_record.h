@@ -50,7 +50,7 @@
 #define HS_YELLOW       0x2BFF
 
 #define LASET_MOD_NO    0xFF
-#define RGB_HSV_MAX     7
+#define RGB_HSV_MAX     5
 #define ________        HS_BLACK
 
 #ifndef RGB_RECORD_HS_LISTS
@@ -79,5 +79,12 @@ bool rgbrec_is_started(void);
 void eeconfig_init_user_datablock(void);
 bool rgbrec_register_record(uint16_t keycode, keyrecord_t *record);
 void record_rgbmatrix_increase(uint8_t *last_mode);
-uint8_t record_color_hsv(bool status);
+void record_color_hsv(void) ;
+void record_color_hsv_reverse(void);
 void query(void);
+void rgbrec_set_hs_data(uint8_t channel, uint8_t row, uint8_t column, uint16_t hs);
+uint16_t rgbrec_get_hs_data(uint8_t channel, uint8_t row, uint8_t column);
+uint32_t rgbrec_calc_address(uint8_t channel, uint8_t row, uint8_t column);
+void rgbrec_switch_channel(uint8_t channel);
+void rgbrec_get_hs_buffer(uint16_t offset, uint16_t size, uint8_t *data);
+void rgbrec_set_hs_buffer(uint16_t offset, uint16_t size, uint8_t *data);

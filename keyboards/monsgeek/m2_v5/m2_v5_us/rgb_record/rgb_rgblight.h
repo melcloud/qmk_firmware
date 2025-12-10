@@ -1,6 +1,7 @@
-// Copyright 2024 SDK (@sdk66)
+// Copyright 2025 Su
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-#include "rgb_matrix.h"
+#pragma once
 
-bool rgb_matrix_indicators_advanced_rgblight(uint8_t led_min, uint8_t led_max);
+void rgb_light_color_set(uint8_t r, uint8_t g, uint8_t b);
+void hs_rgblight_increase(uint8_t mode);

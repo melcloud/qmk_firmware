@@ -704,7 +704,7 @@ void via_qmk_rgb_matrix_get_value(uint8_t *data) {
         }
     }
 }
-
+bool hs_led_flag = false; 
 void via_qmk_rgb_matrix_set_value(uint8_t *data) {
     // data = [ value_id, value_data ]
     uint8_t *value_id   = &(data[0]);
@@ -716,8 +716,10 @@ void via_qmk_rgb_matrix_set_value(uint8_t *data) {
         }
         case id_qmk_rgb_matrix_effect: {
             if (value_data[0] == 0) {
+                hs_led_flag = true;
                 rgb_matrix_disable_noeeprom();
             } else {
+                hs_led_flag = false;
                 rgb_matrix_enable_noeeprom();
                 rgb_matrix_mode_noeeprom(value_data[0]);
             }

@@ -6,11 +6,11 @@
 
 Make example for this keyboard (after setting up your build environment):
 
-    make monsgeek/m2_v5/m2_v5_us/:default
+    make monsgeek/m2_v5/m2_v5_us:default
         
 Flashing example for this keyboard:
 
-    make monsgeek/m2_v5/m2_v5_us/:default
+    make monsgeek/m2_v5/m2_v5_us:default
 
 To reset the board into bootloader mode, do one of the following:
 

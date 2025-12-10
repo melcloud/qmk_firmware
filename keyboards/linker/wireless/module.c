@@ -340,6 +340,15 @@ void md_send_consumer(uint8_t *data) {
     smsg_push(sdata, sizeof(sdata));
 }
 
+void md_send_devctrl_bat(uint8_t cmd) {
+    uint8_t sdata[3] = {0x00};
+
+    sdata[0] = MD_SND_CMD_DEVCTRL_BAT;
+    memcpy(&sdata[1], &cmd, sizeof(sdata) - 2);
+    md_calc_check_sum(sdata, sizeof(sdata) - 1);
+    smsg_push(sdata, sizeof(sdata));
+}
+
 void md_send_system(uint8_t *data) {
     uint8_t sdata[MD_SND_CMD_SYSTEM_LEN + 2] = {0x00};
 
@@ -389,6 +398,24 @@ void md_send_devctrl(uint8_t cmd) {
     sdata[0] = MD_SND_CMD_DEVCTRL;
     memcpy(&sdata[1], &cmd, sizeof(sdata) - 2);
     md_calc_check_sum(sdata, sizeof(sdata) - 1);
+    smsg_push(sdata, sizeof(sdata));
+}
+
+void md_rf_send_carrier(uint8_t channel, uint8_t tx_power, uint8_t phy) {
+    uint8_t sdata[5] = {0x00};
+
+    sdata[0] = CONTINUE;
+    sdata[1] = channel;
+    sdata[2] = tx_power;
+    sdata[3] = phy;
+    md_calc_check_sum(sdata, sizeof(sdata) - 1);
+    // sdata[4] = sdata[0] + sdata[1] - sdata[3];
+    smsg_push(sdata, sizeof(sdata));
+}
+
+void md_rf_send_stop(void) {
+    uint8_t sdata[3] = {0xB4, 0x00, 0xB4};
+
     smsg_push(sdata, sizeof(sdata));
 }
 
@@ -457,13 +484,13 @@ void md_devs_change(uint8_t devs, bool reset) {
         case DEVS_2G4: {
             md_send_devctrl(MD_SND_CMD_DEVCTRL_2G4);
             if (reset) {
-                if (md_get_version() < 48) {
-                    md_send_manufacturer(MD_DONGLE_MANUFACTURER, strlen(MD_DONGLE_MANUFACTURER));
-                    md_send_product(MD_DONGLE_PRODUCT, strlen(MD_DONGLE_PRODUCT));
-                } else { // Add Unicode character support starting from v48.
+                // if (md_get_version() < 48) {
+                //     md_send_manufacturer(MD_DONGLE_MANUFACTURER, strlen(MD_DONGLE_MANUFACTURER));
+                //     md_send_product(MD_DONGLE_PRODUCT, strlen(MD_DONGLE_PRODUCT));
+                // } else { // Add Unicode character support starting from v48.
                     md_send_manufacturer((char *)USBSTR(MD_DONGLE_MANUFACTURER), sizeof(USBSTR(MD_DONGLE_MANUFACTURER)));
                     md_send_product((char *)USBSTR(MD_DONGLE_PRODUCT), sizeof(USBSTR(MD_DONGLE_PRODUCT)));
-                }
+                // }
                 md_send_vpid(VENDOR_ID, PRODUCT_ID);
                 md_send_devctrl(MD_SND_CMD_DEVCTRL_CLEAN);
                 md_send_devctrl(MD_SND_CMD_DEVCTRL_PAIR);
